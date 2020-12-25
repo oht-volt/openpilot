@@ -30,17 +30,22 @@ class RoadSpeedLimiter:
 
           try:
             data, addr = sock.recvfrom(2048)
+            json_obj = json.loads(data.decode())
 
             try:
               self.lock.acquire()
-
-              self.json = json.loads(data.decode())
+              self.json = json_obj
               self.last_updated = current_milli_time()
             finally:
               self.lock.release()
 
           except:
-            self.json = None
+
+            try:
+              self.lock.acquire()
+              self.json = None
+            finally:
+              self.lock.release()
 
       except Exception as e:
         self.last_exception = e
