@@ -1,5 +1,6 @@
 
 import json
+import threading
 import time
 import socket
 from threading import Thread
@@ -12,6 +13,7 @@ class RoadSpeedLimiter:
     self.last_updated = 0
     self.slowing_down = False
     self.last_exception = None
+    self.lock = threading.Lock()
 
     thread = Thread(target=self.udp_recv, args=[])
     thread.setDaemon(True)
@@ -28,8 +30,14 @@ class RoadSpeedLimiter:
 
           try:
             data, addr = sock.recvfrom(2048)
-            self.json = json.loads(data.decode())
-            self.last_updated = current_milli_time()
+
+            try:
+              self.lock.acquire()
+
+              self.json = json.loads(data.decode())
+              self.last_updated = current_milli_time()
+            finally:
+              self.lock.release()
 
           except:
             self.json = None
@@ -121,4 +129,8 @@ def road_speed_limiter_get_max_speed(CS, v_cruise_kph):
   if road_speed_limiter is None:
     road_speed_limiter = RoadSpeedLimiter()
 
-  return road_speed_limiter.get_max_speed(CS, v_cruise_kph)
+  try:
+    road_speed_limiter.lock.acquire()
+    return road_speed_limiter.get_max_speed(CS, v_cruise_kph)
+  finally:
+    road_speed_limiter.lock.release()
