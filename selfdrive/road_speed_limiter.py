@@ -1,46 +1,47 @@
-import os
-import fcntl
-import signal
+
 import json
 import time
-
-LIMIT_PATH = '/data/data/com.neokii.oproadlimit/files/'
-LIMIT_FILE = '/data/data/com.neokii.oproadlimit/files/oproadlimit.json'
+import socket
+from threading import Thread
 
 current_milli_time = lambda: int(round(time.time() * 1000))
-
 
 class RoadSpeedLimiter:
   def __init__(self):
     self.json = None
     self.last_updated = 0
     self.slowing_down = False
+    self.last_exception = None
 
-    try:
-      os.remove(LIMIT_FILE)
-    except:
-      pass
+    thread = Thread(target=self.udp_recv, args=[])
+    thread.setDaemon(True)
+    thread.start()
 
-    try:
-      signal.signal(signal.SIGIO, self.handler)
-      fd = os.open(LIMIT_PATH, os.O_RDONLY)
-      fcntl.fcntl(fd, fcntl.F_SETSIG, 0)
-      fcntl.fcntl(fd, fcntl.F_NOTIFY, fcntl.DN_MODIFY | fcntl.DN_CREATE | fcntl.DN_MULTISHOT)
-    except Exception as ex:
-      pass
+  def udp_recv(self):
 
-  def handler(self, signum, frame):
-    try:
-      self.json = None
-      if os.path.isfile(LIMIT_FILE):
-        with open(LIMIT_FILE, 'r') as f:
-          self.json = json.load(f)
-          self.last_updated = current_milli_time()
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
 
-    except Exception as ex:
-      pass
+      try:
+        sock.bind(('127.0.0.1', 843))
+
+        while True:
+
+          try:
+            data, addr = sock.recvfrom(2048)
+            self.json = json.loads(data.decode())
+            self.last_updated = current_milli_time()
+
+          except:
+            self.json = None
+
+      except Exception as e:
+        self.last_exception = e
 
   def get_val(self, key):
+
+    if self.json is None:
+      return None
+
     if key in self.json:
       return self.json[key]
     return None
@@ -48,7 +49,12 @@ class RoadSpeedLimiter:
   def get_max_speed(self, CS, v_cruise_kph):
 
     if current_milli_time() - self.last_updated > 1000 * 20:
-      log = "expired: {:d}, {:d}".format(current_milli_time(), self.last_updated)
+
+      if self.last_exception is not None:
+        log = str(self.last_exception)
+      else:
+        log = "expired: {:d}, {:d}".format(current_milli_time(), self.last_updated)
+
       self.slowing_down = False
       return 0, 0, 0, log
 
