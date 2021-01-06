@@ -9,6 +9,7 @@ from selfdrive.controls.lib.radar_helpers import _LEAD_ACCEL_TAU
 from selfdrive.controls.lib.longitudinal_mpc import libmpc_py
 from selfdrive.controls.lib.drive_helpers import MPC_COST_LONG
 from selfdrive.kegman_conf import kegman_conf
+from selfdrive.controls.lib.dynamic_follow import DynamicFollow
 
 # One, two and three bar distances (in s)
 kegman = kegman_conf()
@@ -71,7 +72,7 @@ LOG_MPC = os.environ.get('LOG_MPC', False)
 class LongitudinalMpc():
   def __init__(self, mpc_id):
     self.mpc_id = mpc_id
-
+    self.dynamic_follow = DynamicFollow(mpc_id)
     self.setup_mpc()
     self.v_mpc = 0.0
     self.v_mpc_future = 0.0
@@ -150,6 +151,7 @@ class LongitudinalMpc():
         self.libmpc.init_with_simulation(self.v_mpc, x_lead, v_lead, a_lead, self.a_lead_tau)
         self.new_lead = True
 
+      self.dynamic_follow.update_lead(v_lead, a_lead, x_lead, lead.status, self.new_lead)
       self.prev_lead_status = True
       self.prev_lead_x = x_lead
       self.cur_state[0].x_l = x_lead
@@ -195,7 +197,8 @@ class LongitudinalMpc():
     if CS.readdistancelines == 1:
       #if self.street_speed and (self.lead_car_gap_shrinking or self.tailgating):
       if self.street_speed:
-        TR = interp(-self.v_rel, self.oneBarBP, self.oneBarProfile)  
+#        TR = interp(-self.v_rel, self.oneBarBP, self.oneBarProfile)
+	    TR = self.dynamic_follow.update(CS, self.libmpc)  # update dynamic follow		  
       else:
         TR = interp(-self.v_rel, H_ONE_BAR_PROFILE_BP, self.oneBarHwy) 
       if CS.readdistancelines != self.lastTR:
