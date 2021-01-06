@@ -63,7 +63,7 @@ class LongControl():
                             convert=compute_gb)
     self.v_pid = 0.0
     self.last_output_gb = 0.0
-	self.dynamic_gas = DynamicGas(CP)
+    self.dynamic_gas = DynamicGas(CP)
 
   def reset(self, v_pid):
     """Reset PID controller and change setpoint"""
@@ -75,7 +75,7 @@ class LongControl():
     # Actuation limits
     gas_max = interp(CS.vEgo, CP.gasMaxBP, CP.gasMaxV)
     brake_max = interp(CS.vEgo, CP.brakeMaxBP, CP.brakeMaxV)
-	gas_max = self.dynamic_gas.update(CS, sm)
+    gas_max = self.dynamic_gas.update(CS, sm)
     # Update state machine
     output_gb = self.last_output_gb
     self.long_control_state = long_control_state_trans(active, self.long_control_state, CS.vEgo,
