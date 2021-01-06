@@ -62,7 +62,7 @@ class DynamicFollow:
     self._update_car(CS)
     self._get_profiles()
 
-    if not self.lead_data.status
+    if not self.lead_data.status:
       self.TR = self.default_TR
     else:
       self._store_df_data()
