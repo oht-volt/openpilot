@@ -10,7 +10,7 @@ DP_SPORT = 3
 class DynamicGas:
   def __init__(self, CP):
     self.CP = CP
-	self.set_profile()
+    self.set_profile()
     self.candidate = self.CP.carFingerprint
     self.lead_data = {'v_rel': None, 'a_lead': None, 'x_lead': None, 'status': False}
     self.mpc_TR = 1.8
