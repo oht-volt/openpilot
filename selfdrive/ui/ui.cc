@@ -375,13 +375,13 @@ static void update_status(UIState *s) {
 
 static void update_extras(UIState *s)
 {
-   if(s->awake && s->status != STATUS_OFFROAD)
-   {
+  if(s->awake && s->status != STATUS_OFFROAD)
+  {
         int touch_x = -1, touch_y = -1;
         int touched = touch_poll(&(s->touch), &touch_x, &touch_y, 0);
         dashcam(s, touch_x, touch_y);
         touched = touched + 0;
-   }
+  }
 }
 
 void ui_update(UIState *s) {
