@@ -340,7 +340,7 @@ bool dashcam( UIState *s, int touch_x, int touch_y ) {
     screen_toggle_lock();
     touched = true;
   }
-  if (!s->started) {
+  if (!s->vipc_client->connected) {
     // Assume car is not in drive so stop recording
     stop_capture();
   }
