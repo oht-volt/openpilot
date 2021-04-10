@@ -8,6 +8,7 @@ from common.realtime import sec_since_boot
 from selfdrive.controls.lib.radar_helpers import _LEAD_ACCEL_TAU
 from selfdrive.controls.lib.longitudinal_mpc import libmpc_py
 from selfdrive.controls.lib.drive_helpers import MPC_COST_LONG
+from selfdrive.controls.lib.dynamic_follow import DynamicFollow
 
 STOPPING_DISTANCE = 1.5
 
@@ -17,7 +18,7 @@ LOG_MPC = os.environ.get('LOG_MPC', False)
 class LongitudinalMpc():
   def __init__(self, mpc_id):
     self.mpc_id = mpc_id
-
+    self.dynamic_follow = DynamicFollow(mpc_id)
     self.setup_mpc()
     self.v_mpc = 0.0
     self.v_mpc_future = 0.0
@@ -86,6 +87,7 @@ class LongitudinalMpc():
         self.libmpc.init_with_simulation(self.v_mpc, x_lead, v_lead, a_lead, self.a_lead_tau)
         self.new_lead = True
 
+      self.dynamic_follow.update_lead(v_lead, a_lead, x_lead, lead.status, self.new_lead)
       self.prev_lead_status = True
       self.prev_lead_x = x_lead
       self.cur_state[0].x_l = x_lead
@@ -96,6 +98,7 @@ class LongitudinalMpc():
       self.cur_state[0].x_l = 50.0
       self.cur_state[0].v_l = v_ego + 10.0
       a_lead = 0.0
+      v_lead = 0.0
       self.a_lead_tau = _LEAD_ACCEL_TAU
     # Calculate conditions
     self.v_rel = v_lead - v_ego   # calculate relative velocity vs lead car
@@ -103,11 +106,12 @@ class LongitudinalMpc():
     # Calculate mpc
     t = sec_since_boot()
     cruise_gap = int(clip(CS.cruiseGap, 1., 3.))
-        
-
     baseTR = interp(float(cruise_gap), [1., 2., 3.], [1.0, 1.3, 1.8])
     if v_ego <= 20.0:
-      TR = interp(-self.v_rel, [-0.1, 2.0 + cruise_gap*0.25], [baseTR, 2.1])
+	  if cruise_gap == 1:
+        TR = self.dynamic_follow.update(CS, self.libmpc)
+	  else:
+	    TR = interp(-self.v_rel, [-0.1, 2.0 + cruise_gap*0.25], [baseTR, 2.1])
     else:
       TR = interp(-self.v_rel, [0, 3.5], [baseTR, 1.8])
       
