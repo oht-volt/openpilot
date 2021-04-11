@@ -40,7 +40,7 @@ class DynamicFollow:
 
     self.sng_TR = 1.8  # reacceleration stop and go TR
     self.sng_speed = 18.0 * CV.MPH_TO_MS
-
+    self.dp_dynamic_follow = PROFILE_AUTO
 
     self._setup_changing_variables()
 
@@ -75,8 +75,8 @@ class DynamicFollow:
 
   def _get_profiles(self):
     """This receives profile change updates from dfManager and runs the auto-df prediction if auto mode"""
-#    if self.dp_dynamic_follow == PROFILE_AUTO:  # todo: find some way to share prediction between the two mpcs to reduce processing overhead
-    self._get_pred()  # sets self.model_profile, all other checks are inside function
+    if self.dp_dynamic_follow == PROFILE_AUTO:  # todo: find some way to share prediction between the two mpcs to reduce processing overhead
+      self._get_pred()  # sets self.model_profile, all other checks are inside function
 
   def _norm(self, x, name):
     self.x = x
@@ -219,15 +219,15 @@ class DynamicFollow:
     x_vel = [0.0, 1.8627, 3.7253, 5.588, 7.4507, 9.3133, 11.5598, 13.645, 22.352, 31.2928, 33.528, 35.7632, 40.2336]  # velocities
     profile_mod_x = [2.2352, 13.4112, 24.5872, 35.7632]  # profile mod speeds, mph: [5., 30., 55., 80.]
 
-#    if self.dp_dynamic_follow == PROFILE_AUTO:  # decide which profile to use, model profile will be updated before this
+    if self.dp_dynamic_follow == PROFILE_AUTO:  # decide which profile to use, model profile will be updated before this
       # df is 0 = traffic, 1 = relaxed, 2 = roadtrip, 3 = auto
       # dp is 0 = off, 1 = short, 2 = normal, 3 = long, 4 = auto
       # if it's model profile, we need to convert it
-    if self.model_profile is None:
+      if self.model_profile is None:
         # when its none, we use normal instead
-      df_profile = PROFILE_SHORT
-    else:
-      df_profile = self.model_profile + 1
+        df_profile = PROFILE_NORMAL
+      else:
+        df_profile = self.model_profile + 1
 
     if df_profile == PROFILE_LONG:
       y_dist = [1.3978, 1.4132, 1.4318, 1.4536, 1.485, 1.5229, 1.5819, 1.6203, 1.7238, 1.8231, 1.8379, 1.8495, 1.8535]  # TRs
