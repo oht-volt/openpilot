@@ -75,4 +75,4 @@ class DynamicGas:
     self.lead_data['v_rel'] = lead_one.vRel
     self.lead_data['a_lead'] = lead_one.aLeadK
     self.lead_data['x_lead'] = lead_one.dRel
-    self.lead_data['status'] = sm['plan'].hasLead  # this fixes radarstate always reporting a lead, thanks to arne
+    self.lead_data['status'] = sm['longitudinalPlan'].hasLead  # this fixes radarstate always reporting a lead, thanks to arne
