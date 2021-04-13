@@ -40,7 +40,7 @@ class DynamicFollow:
 
     self.sng_TR = 1.8  # reacceleration stop and go TR
     self.sng_speed = 18.0 * CV.MPH_TO_MS
-    self.dp_dynamic_follow = PROFILE_AUTO
+    self.dp_dynamic_follow = PROFILE_SHORT
 
     self._setup_changing_variables()
 
@@ -228,6 +228,8 @@ class DynamicFollow:
         df_profile = PROFILE_NORMAL
       else:
         df_profile = self.model_profile + 1
+    else:
+      df_profile = self.dp_dynamic_follow
 
     if df_profile == PROFILE_LONG:
       y_dist = [1.3978, 1.4132, 1.4318, 1.4536, 1.485, 1.5229, 1.5819, 1.6203, 1.7238, 1.8231, 1.8379, 1.8495, 1.8535]  # TRs
